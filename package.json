@@ -4,7 +4,9 @@
   "description": "An api that enables doctors to manage appointments and schedule with their patients as well as store medical records",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node ./dist/server.js",
+    "build": "tsc -p .",
+    "dev": "nodemon ./src/server.ts"
   },
   "author": "Gibril Idrisu Issaka",
   "license": "MIT",
