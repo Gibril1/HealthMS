@@ -61,7 +61,7 @@ const registerUser = asyncHandler(async(req:Request, res:Response) => {
                 firstName: firstName,
                 lastName: lastName,
                 otherName: otherName,
-                dob: dob? dob : null,
+                dob: dob!,
                 userId: user.id,
                 cloudinaryId: result ? result.public_id : null,
                 avatar: result ? result.secure_url : null
@@ -77,7 +77,7 @@ const registerUser = asyncHandler(async(req:Request, res:Response) => {
             firstName: firstName,
             lastName: lastName,
             otherName: otherName,
-            dob:  dob? dob : null,
+            dob:  dob!,
             userId: user.id,
             cloudinaryId: result ? result.public_id : null,
             avatar: result ? result.secure_url : null

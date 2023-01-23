@@ -9,6 +9,6 @@ export interface IUserInterface {
     firstName: string,
     lastName: string,
     otherName: string,
-    dob: Date | null | string
+    dob: Date | null 
 }
 
