@@ -1,4 +1,6 @@
 const router = require('express').Router()
+const upload = require('../utils/multer')
+
 
 const {
     registerUser,
@@ -6,8 +8,8 @@ const {
 } = require('../controllers/AuthControllers')
 
 
-router.post('', registerUser)
-router.post('login', loginUser)
+router.post('/register', upload.single('image'), registerUser)
+router.post('/login', loginUser)
 
 
 module.exports = router

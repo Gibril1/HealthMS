@@ -29,9 +29,9 @@ model PatientProfile {
   firstName    String
   lastName     String
   otherName    String
-  dob          DateTime
-  avatar       String
-  cloudinaryId String
+  dob          DateTime?
+  avatar       String?
+  cloudinaryId String?
   createdAt    DateTime @default(now())
   userId       String   @unique
   user         User     @relation(fields: [userId], references: [id])
@@ -42,9 +42,9 @@ model DoctorProfile {
   firstName    String
   lastName     String
   otherName    String
-  dob          DateTime
-  avatar       String
-  cloudinaryId String
+  dob          DateTime?
+  avatar       String?
+  cloudinaryId String?
   createdAt    DateTime @default(now())
   userId       String   @unique
   user         User     @relation(fields: [userId], references: [id])

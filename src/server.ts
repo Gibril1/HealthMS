@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 app.use(errorHandler)
 
 // routes
-app.use('api/auth/', require('./routes/AuthRoutes'))
+app.use('/api/auth', require('./routes/AuthRoutes'))
 
 // Listen to app
 app.listen(port, () => {
