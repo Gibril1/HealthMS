@@ -22,3 +22,8 @@ export interface IUpdateMeetingDetails {
     rating?: number,
     doctorId: string
 }
+
+export interface IDateTimeInterface {
+    meetingTime?: Date,
+    accept: boolean
+}
