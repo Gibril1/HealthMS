@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Meeting" ADD COLUMN     "rating" DOUBLE PRECISION,
+ALTER COLUMN "patientRemarks" DROP NOT NULL,
+ALTER COLUMN "acceptance" DROP NOT NULL,
+ALTER COLUMN "executed" DROP NOT NULL;

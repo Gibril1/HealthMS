@@ -66,9 +66,10 @@ model Meeting {
   patientId      String
   patient        User      @relation(fields: [patientId], references: [id])
   doctorId       String
-  patientRemarks String
+  patientRemarks String?
   meetingTime    DateTime?
-  acceptance     Boolean
-  executed       Boolean
+  acceptance     Boolean?
+  executed       Boolean?
   createdAt      DateTime  @default(now())
+  rating         Float?
 }
