@@ -17,8 +17,9 @@ app.use(errorHandler)
 app.use('/api/auth', require('./routes/AuthRoutes'))
 app.use('/api/records', require('./routes/RecordRoutes'))
 app.use('/api/meeting', require('./routes/MeetingRoutes'))
+app.use('/api/doctor', require('./routes/DoctorRoutes'))
 
-// Listen to app
+// Listen to server
 app.listen(port, () => {
     console.log(`Server running on port ${port}`)
 })
