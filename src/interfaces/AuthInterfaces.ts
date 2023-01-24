@@ -1,5 +1,6 @@
 import { Role } from "@prisma/client"
 import { Request } from "express"
+
 export interface IUserModel  {
     id: string,
     email: string,
@@ -8,7 +9,7 @@ export interface IUserModel  {
 
 }
 
-export interface IUserInterface {
+export interface IRegisterUserInterface {
     email: string,
     password: string,
     role: Role ,
@@ -18,8 +19,13 @@ export interface IUserInterface {
     dob: Date | null 
 }
 
+export interface ILoginUserInterface {
+    email: string,
+    password: string
+}
+
 export interface IGetUserAuthInfoRequest extends Request {
-    user: IUserModel | null
+    user: IUserModel 
 }
 
 export type IAuthRequest = IGetUserAuthInfoRequest & {

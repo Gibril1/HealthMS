@@ -12,6 +12,7 @@ router.post('/register', upload.single('image'), registerUser)
 router.post('/login', loginUser)
 
 
+
 module.exports = router
 
 export {}
