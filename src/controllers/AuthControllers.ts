@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
-import { IUserInterface } from '../interfaces/BodyInterfaces'
+import { IUserInterface } from '../interfaces/AuthInterfaces'
 
 
 const registerUser = asyncHandler(async(req:Request, res:Response) => {

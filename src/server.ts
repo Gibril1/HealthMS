@@ -15,6 +15,7 @@ app.use(errorHandler)
 
 // routes
 app.use('/api/auth', require('./routes/AuthRoutes'))
+app.use('/api/records', require('./routes/RecordRoutes'))
 
 // Listen to app
 app.listen(port, () => {
