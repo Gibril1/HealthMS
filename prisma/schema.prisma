@@ -18,6 +18,7 @@ model User {
   PatientProfile PatientProfile?
   DoctorProfile  DoctorProfile?
   PatientRecords PatientRecords[]
+  Meeting        Meeting[]
 }
 
 enum Role {
@@ -53,9 +54,21 @@ model DoctorProfile {
 
 model PatientRecords {
   id        String   @id @default(uuid())
-  patientId String   @unique
+  patientId String
   patient   User     @relation(fields: [patientId], references: [id])
-  doctorId  String   @unique
+  doctorId  String
   remarks   String
   createdAt DateTime @default(now())
+}
+
+model Meeting {
+  id             String    @id @default(uuid())
+  patientId      String
+  patient        User      @relation(fields: [patientId], references: [id])
+  doctorId       String
+  patientRemarks String
+  meetingTime    DateTime?
+  acceptance     Boolean
+  executed       Boolean
+  createdAt      DateTime  @default(now())
 }
