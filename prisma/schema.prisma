@@ -11,13 +11,13 @@ datasource db {
 }
 
 model User {
-  id             String          @id @default(uuid())
-  email          String          @unique
+  id             String           @id @default(uuid())
+  email          String           @unique
   password       String
-  role           Role            @default(DOCTOR)
+  role           Role             @default(DOCTOR)
   PatientProfile PatientProfile?
   DoctorProfile  DoctorProfile?
-  PatientRecords PatientRecords?
+  PatientRecords PatientRecords[]
 }
 
 enum Role {
@@ -52,9 +52,10 @@ model DoctorProfile {
 }
 
 model PatientRecords {
-  id        String @id @default(uuid())
-  patientId String @unique
-  patient   User   @relation(fields: [patientId], references: [id])
-  doctorId  String @unique
+  id        String   @id @default(uuid())
+  patientId String   @unique
+  patient   User     @relation(fields: [patientId], references: [id])
+  doctorId  String   @unique
   remarks   String
+  createdAt DateTime @default(now())
 }

@@ -21,9 +21,7 @@ const protect = asyncHandler(async(req:IAuthRequest, res:Response, next:NextFunc
                 where:{
                     id: decoded.id as string
                 },
-                select:{
-                    password: false
-                }, 
+                 
             }) as IUserModel
             next()
         } catch(err) {

@@ -4,13 +4,16 @@ const { protect } = require('../middleware/AuthMiddleware')
 
 const {
     createRecords,
-    getRecords,
+    getPatientsRecords,
+    getDoctorRecords,
     getRecord,
     updateRecord,
     deleteRecord
 } = require('../controllers/RecordControllers')
 
-router.post('/').post(protect, createRecords).get(protect, getRecords)
+router.post('/', protect, createRecords)
+router.get('/patient', protect, getPatientsRecords)
+router.get('/doctor', protect, getDoctorRecords)
 router.route('/:id').get(protect, getRecord).put(protect, updateRecord).delete(protect, deleteRecord)
 
 module.exports = router
