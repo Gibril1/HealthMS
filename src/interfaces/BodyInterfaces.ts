@@ -23,7 +23,7 @@ export interface IUpdateMeetingDetails {
     doctorId: string
 }
 
-export interface IDateTimeInterface {
+export interface IAcceptMeetingInterface {
     meetingTime?: Date,
     accept: boolean
 }

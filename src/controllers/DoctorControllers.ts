@@ -3,7 +3,7 @@ const prisma = new PrismaClient()
 const asyncHandler = require('express-async-handler')
 import { Response } from 'express'
 import { IGetUserAuthInfoRequest } from '../interfaces/AuthInterfaces'
-import { IDateTimeInterface } from '../interfaces/BodyInterfaces'
+import { IAcceptMeetingInterface } from '../interfaces/BodyInterfaces'
 
 
 const acceptOrDeclineMeetings = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Response) => {
@@ -39,9 +39,9 @@ const acceptOrDeclineMeetings = asyncHandler(async(req:IGetUserAuthInfoRequest, 
         throw new Error('Please enter input fields')
     }
 
-    const { meetingTime, accept } = req.body as IDateTimeInterface
+    const { meetingTime, accept } = req.body as IAcceptMeetingInterface
 
-    if(!meetingTime){
+    if(!meetingTime || !accept){
         res.status(400)
         throw new Error('Please enter input fields')
     }

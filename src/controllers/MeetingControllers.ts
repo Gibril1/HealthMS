@@ -40,7 +40,9 @@ const createMeeting = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Respon
     const meeting = await prisma.meeting.create({
         data:{
             doctorId: doctorId,
-            patientId: req.user.id
+            patientId: req.user.id,
+            acceptance: false,
+            executed: false
         }
     })
 
@@ -78,6 +80,11 @@ const executedMeeting = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Resp
         if(req.user.id !== meeting.patientId){
             res.status(400)
             throw new Error('You are not authorized to edit this meeting details')
+        }
+
+        if(meeting.acceptance === null || meeting.acceptance === false){
+            res.status(400)
+            throw new Error('You cannot give remarks for this meeting yet')
         }
 
         const { patientRemarks, rating } = req.body as IExecutedMeeting
