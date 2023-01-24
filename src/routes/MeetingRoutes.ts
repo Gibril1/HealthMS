@@ -8,7 +8,10 @@ const {
     updateMeeting,
     deleteMeeting,
     getMeetings,
-    getMeeting
+    getMeeting,
+    getAcceptedMeetings,
+    getDeclinedMeetings,
+    getExecutedMeetings
 } = require('../controllers/MeetingControllers')
 
 router.route('/')
@@ -21,6 +24,10 @@ router.route('/:id')
         .delete(protect, deleteMeeting)
 
 router.put('/executed/:id', protect, executedMeeting )
+router.get('/executed/', protect, getExecutedMeetings)
+
+router.get('/accepted', protect, getAcceptedMeetings)
+router.get('/declined', protect, getDeclinedMeetings)
 
 
 

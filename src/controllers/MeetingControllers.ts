@@ -290,6 +290,96 @@ const getMeeting = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Response)
 })
 
 
+// @desc Get Accepted Meetings
+// @routes GET /api/meetings/accepted
+// @access Private Patient
+const getAcceptedMeetings = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Response) => {
+    try {
+        if(!req.user){
+            res.status(400)
+            throw new Error('You are not authorised!')
+        }
+    
+        if(req.user.role !== 'PATIENT'){
+            res.status(400)
+            throw new Error('You are not permitted to create meetings!')
+        }
+    
+        const meetings = await prisma.meeting.findMany({
+            where: {
+                acceptance: true,
+                patientId: req.user.id
+            }
+        })
+
+        res.status(200).json(meetings)
+    } catch (error:any) {
+        res.status(500)
+        throw new Error(error.message)
+    }
+
+})
+
+
+// @desc Get Declined Meetings
+// @routes GET /api/meetings/declined
+// @access Private Patient
+const getDeclinedMeetings = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Response) => {
+    try {
+        if(!req.user){
+            res.status(400)
+            throw new Error('You are not authorised!')
+        }
+    
+        if(req.user.role !== 'PATIENT'){
+            res.status(400)
+            throw new Error('You are not permitted to create meetings!')
+        }
+    
+        const meetings = await prisma.meeting.findMany({
+            where: {
+                acceptance: false,
+                patientId: req.user.id
+            }
+        })
+
+        res.status(200).json(meetings)
+    } catch (error:any) {
+        res.status(500)
+        throw new Error(error.message)
+    }
+
+})
+// @desc Get Executed Meetings
+// @routes GET /api/meetings/executed
+// @access Private Patient
+const getExecutedMeetings = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Response) => {
+    try {
+        if(!req.user){
+            res.status(400)
+            throw new Error('You are not authorised!')
+        }
+    
+        if(req.user.role !== 'PATIENT'){
+            res.status(400)
+            throw new Error('You are not permitted to create meetings!')
+        }
+    
+        const meetings = await prisma.meeting.findMany({
+            where: {
+                acceptance: true,
+                executed: true,
+                patientId: req.user.id
+            }
+        })
+
+        res.status(200).json(meetings)
+    } catch (error:any) {
+        res.status(500)
+        throw new Error(error.message)
+    }
+
+})
 
 module.exports = {
     createMeeting,
@@ -297,5 +387,8 @@ module.exports = {
     updateMeeting,
     deleteMeeting,
     getMeetings,
-    getMeeting
+    getMeeting,
+    getAcceptedMeetings,
+    getDeclinedMeetings,
+    getExecutedMeetings
 }
