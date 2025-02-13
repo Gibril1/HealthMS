@@ -7,11 +7,11 @@ import {
     getInvitedMeetings
 } from '../controllers/doctor.controllers';
 
-const router = Router();
+const doctorRouter = Router();
 
-router.put('/:id', protect, acceptOrDeclineMeetings);
-router.get('/meetings', protect, getInvitedMeetings);
-router.get('/meetings/accept', protect, getAcceptedMeetings);
-router.get('/meetings/decline', protect, getDeclinedMeetings);
+doctorRouter.put('/:id', protect, acceptOrDeclineMeetings);
+doctorRouter.get('/meetings', protect, getInvitedMeetings);
+doctorRouter.get('/meetings/accept', protect, getAcceptedMeetings);
+doctorRouter.get('/meetings/decline', protect, getDeclinedMeetings);
 
-export default router;
+export default doctorRouter;

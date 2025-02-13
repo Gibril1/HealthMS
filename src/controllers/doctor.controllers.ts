@@ -2,8 +2,8 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import asyncHandler from '../utils/asynchandler'
 import { Response } from 'express'
-import { IGetUserAuthInfoRequest } from '../interfaces/AuthInterfaces'
-import { IAcceptMeetingInterface } from '../interfaces/BodyInterfaces'
+import { IGetUserAuthInfoRequest } from '../interfaces/auth.interfaces'
+import { IAcceptMeetingInterface } from '../interfaces/body.interfaces'
 
 
 

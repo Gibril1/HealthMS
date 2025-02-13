@@ -1,15 +1,15 @@
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
-const asyncHandler = require('express-async-handler')
+import asyncHandler from '../utils/asynchandler'
 import { Response } from 'express'
-import { IGetUserAuthInfoRequest } from '../interfaces/AuthInterfaces'
-import { IRecordInterface, IPatientIDInterface } from '../interfaces/BodyInterfaces'
+import { IGetUserAuthInfoRequest } from '../interfaces/auth.interfaces'
+import { IRecordInterface, IPatientIDInterface } from '../interfaces/body.interfaces'
 
 
 // @desc Create Records 
 // @routes POST /api/records/
 // @access Private
-const createRecords = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Response) => {
+export const createRecords = asyncHandler(async(req:any, res:Response) => {
     if(!req.user){
         res.status(400)
         throw new Error('You are not authorised!')
@@ -47,15 +47,15 @@ const createRecords = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Respon
         throw new Error(`Patient with id ${patientId} does not exist`)
     }
 
-    const record = await prisma.patientRecords.create({
-        data:{
-            remarks: remarks,
-            doctorId: req.user.id,
-            patientId: patientId
-        }
-    })
+    // const record = await prisma.patientRecords.create({
+    //     data:{
+    //         remarks: remarks,
+    //         doctorId: req.user.id,
+    //         patientId: patientId
+    //     }
+    // })
 
-    res.status(200).json(record)
+    // res.status(200).json(record)
 
 })
 
@@ -63,7 +63,7 @@ const createRecords = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Respon
 // @desc Get Doctor's Records
 // @routes GET /api/records/
 // @access Private Doctor
-const getDoctorRecords = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Response) => {
+export const getDoctorRecords = asyncHandler(async(req:any, res:Response) => {
     if(!req.user){
         res.status(400)
         throw new Error('You are not authorised!')
@@ -88,7 +88,7 @@ const getDoctorRecords = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Res
 // @desc Get Patient Records
 // @routes GET /api/records
 // @access Private Doctor
-const getPatientsRecords = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Response) => {
+export const getPatientsRecords = asyncHandler(async(req:any, res:Response) => {
     if(!req.user){
         res.status(400)
         throw new Error('You are not authorised!')
@@ -125,7 +125,7 @@ const getPatientsRecords = asyncHandler(async(req:IGetUserAuthInfoRequest, res:R
 // @desc Get A Record
 // @routes GET /api/records/:id
 // @access Private Doctor
-const getRecord = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Response) => {
+export const getRecord = asyncHandler(async(req:any, res:Response) => {
     if(!req.user){
         res.status(400)
         throw new Error('You are not authorised!')
@@ -149,7 +149,7 @@ const getRecord = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Response) 
     res.status(200).json(record)
 
 })
-const updateRecord = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Response) => {
+export const updateRecord = asyncHandler(async(req:any, res:Response) => {
     if(!req.user){
         res.status(400)
         throw new Error('You are not authorised!')
@@ -202,7 +202,7 @@ const updateRecord = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Respons
     res.status(200).json(updatedRecord)
 
 })
-const deleteRecord = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Response) => {
+export const deleteRecord = asyncHandler(async(req:any, res:Response) => {
     if(!req.user){
         res.status(400)
         throw new Error('You are not authorised!')
@@ -240,11 +240,3 @@ const deleteRecord = asyncHandler(async(req:IGetUserAuthInfoRequest, res:Respons
 
 
 
-module.exports = {
-    createRecords,
-    getDoctorRecords,
-    getPatientsRecords,
-    getRecord,
-    updateRecord,
-    deleteRecord
-}

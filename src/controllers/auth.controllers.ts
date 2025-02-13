@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
-import { ILoginUserInterface, IRegisterUserInterface } from '../interfaces/AuthInterfaces'
+import { ILoginUserInterface, IRegisterUserInterface } from '../interfaces/auth.interfaces'
 
 
 

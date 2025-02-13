@@ -2,7 +2,7 @@ import { Response, NextFunction, Request } from "express";
 import jwt from "jsonwebtoken";
 import asyncHandler from "../utils/asynchandler";
 import { PrismaClient } from "@prisma/client";
-import { IUserModel } from "../interfaces/AuthInterfaces";
+import { IUserModel } from "../interfaces/auth.interfaces";
 
 const prisma = new PrismaClient();
 
