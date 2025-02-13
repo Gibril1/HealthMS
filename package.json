@@ -11,7 +11,10 @@
   "author": "Gibril Idrisu Issaka",
   "license": "MIT",
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/express": "^4.17.15",
+    "@types/jsonwebtoken": "^9.0.8",
+    "@types/multer": "^1.4.12",
     "@types/node": "^18.11.18",
     "nodemon": "^2.0.20",
     "prisma": "^4.9.0",

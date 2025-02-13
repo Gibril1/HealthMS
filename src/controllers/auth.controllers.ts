@@ -1,14 +1,15 @@
 import { Request, Response } from 'express'
-const asyncHandler = require('express-async-handler')
-const cloudinary = require('../utils/cloudinary')
-const jwt = require('jsonwebtoken')
-const bcrypt = require('bcryptjs')
+import asyncHandler from 'express-async-handler'
+import cloudinary from '../utils/cloudinary'
+import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import { ILoginUserInterface, IRegisterUserInterface } from '../interfaces/AuthInterfaces'
 
 
-const registerUser = asyncHandler(async(req:Request, res:Response) => {
+
+export const registerUser = asyncHandler(async(req:Request, res:Response) => {
     try {
         if(!req.body){
             res.status(400)
@@ -29,7 +30,7 @@ const registerUser = asyncHandler(async(req:Request, res:Response) => {
         let result
         const fileImage = (req as any).file
         if(fileImage){
-            result = await cloudinary.uploader.upload(req as any).file.path
+            result = (await cloudinary.uploader.upload(req as any)).file.path
         }
 
         // check if all input fields are correct
@@ -101,7 +102,7 @@ const registerUser = asyncHandler(async(req:Request, res:Response) => {
     }   
 })
 
-const loginUser = asyncHandler(async(req:Request, res:Response) => {
+export const loginUser = asyncHandler(async(req:Request, res:Response) => {
     try {
         // get data from request body
         const { email, password } = req.body as ILoginUserInterface
@@ -120,7 +121,7 @@ const loginUser = asyncHandler(async(req:Request, res:Response) => {
             throw new Error(`User with email ${email} does not exist`)
         }
 
-        if(user && bcrypt.compare(password, user.password)){
+        if(user && await bcrypt.compare(password, user.password)){
             res.status(200).json({
                 token: generateToken(user.id)
             })
@@ -138,12 +139,6 @@ const loginUser = asyncHandler(async(req:Request, res:Response) => {
 
 
 const generateToken = ( id:string ):string => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d'})
+    return jwt.sign({ id }, "process.env.JWT_SECRET", { expiresIn: '30d'})
 }
 
-module.exports = {
-    registerUser,
-    loginUser
-}
-
-export {}

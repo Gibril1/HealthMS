@@ -6,25 +6,21 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
   id             String           @id @default(uuid())
   email          String           @unique
   password       String
-  role           Role             @default(DOCTOR)
+  role           String             @default("DOCTOR")
   PatientProfile PatientProfile?
   DoctorProfile  DoctorProfile?
-  PatientRecords PatientRecords[]
-  Meeting        Meeting[]
+  createdAt    DateTime  @default(now())
 }
 
-enum Role {
-  DOCTOR
-  PATIENT
-}
+
 
 model PatientProfile {
   id           String    @id @default(uuid())
@@ -37,6 +33,9 @@ model PatientProfile {
   createdAt    DateTime  @default(now())
   userId       String    @unique
   user         User      @relation(fields: [userId], references: [id])
+  PatientRecords PatientRecords[]
+  Meeting        Meeting[]
+
 }
 
 model DoctorProfile {
@@ -50,26 +49,36 @@ model DoctorProfile {
   createdAt    DateTime  @default(now())
   userId       String    @unique
   user         User      @relation(fields: [userId], references: [id])
+  PatientRecords PatientRecords[]
+  Meeting        Meeting[]
 }
 
 model PatientRecords {
   id        String   @id @default(uuid())
   patientId String
-  patient   User     @relation(fields: [patientId], references: [id])
+  patient   PatientProfile     @relation(fields: [patientId], references: [id])
   doctorId  String
+  doctor DoctorProfile @relation(fields: [doctorId], references: [id])
   remarks   String
+  diagnosis String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
+
+
 
 model Meeting {
   id             String    @id @default(uuid())
+
   patientId      String
-  patient        User      @relation(fields: [patientId], references: [id])
+  patient        PatientProfile      @relation(fields: [patientId], references: [id])
   doctorId       String
-  patientRemarks String?
+  doctor         DoctorProfile       @relation(fields: [doctorId], references: [id])
+
   meetingTime    DateTime?
-  acceptance     Boolean?
-  executed       Boolean?
+  status     String       @default("PENDING")
+
   createdAt      DateTime  @default(now())
-  rating         Float?
+  updatedAt DateTime @updatedAt
 }
+
