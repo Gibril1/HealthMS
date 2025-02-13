@@ -1,18 +1,17 @@
-import { Role } from "@prisma/client"
 import { Request } from "express"
 
 export interface IUserModel  {
     id: string,
     email: string,
     password: string,
-    role: Role
+    role: string
 
 }
 
 export interface IRegisterUserInterface {
     email: string,
     password: string,
-    role: Role ,
+    role: string ,
     firstName: string,
     lastName: string,
     otherName: string,
