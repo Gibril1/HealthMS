@@ -98,7 +98,7 @@ export const createMeeting = asyncHandler(async (req: Request, res: Response, ne
 export const getMeetings = asyncHandler(async(req:any, res:Response) => {
     try {
         if(req.user.role !== 'PATIENT'){
-            res.status(400).json({ message: 'You are not permitted to create meetings'})
+            res.status(400).json({ message: 'You are not authorised'})
             return;
         }
 
