@@ -1,189 +1,146 @@
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import asyncHandler from '../utils/asynchandler'
-import { Response } from 'express'
-import { IGetUserAuthInfoRequest } from '../interfaces/auth.interfaces'
-import { IDoctorIDInterface, IExecutedMeeting, IUpdateMeetingDetails } from '../interfaces/body.interfaces'
+import { NextFunction, Response, Request } from 'express'
+import { IDoctorIDInterface, IAddReviewInterface, IUpdateMeetingDetails } from '../interfaces/body.interfaces'
+import { Console } from 'console'
 
 // @desc Create Meeting
 // @routes POST /api/meeting
 // @access Private Patient
-export const createMeeting = asyncHandler(async(req:any, res:Response) => {
-    if(!req.user){
-        res.status(400)
-        throw new Error('You are not authorised!')
-    }
-
-    if(req.user.role !== 'PATIENT'){
-        res.status(400)
-        throw new Error('You are not permitted to create meetings!')
-    }
-
-    const { doctorId } = req.body as IDoctorIDInterface
-
-    if(!doctorId || doctorId === ''){
-        res.status(400)
-        throw new Error('Please select a doctor')
-    }
-
-    const doctorExists = await prisma.user.findFirst({
-        where:{
-            id: doctorId
-        }
-    })
-
-    if(!doctorExists){
-        res.status(404)
-        throw new Error(`Doctor with id of ${doctorId} does not exist`)
-    }
-
-    // const meeting = await prisma.meeting.create({
-    //     data:{
-    //         doctorId: doctorId,
-    //         patientId: req.user.id,
-    //         acceptance: false,
-    //         executed: false
-    //     }
-    // })
-
-    // res.status(200).json(meeting)
-    
-})
-
-// @desc Give Remarks After Meeting Has Been Executed
-// @routes PUT /api/meeting/:id
-// @access Private Patient
-export const executedMeeting = asyncHandler(async(req:any, res:Response) => {
+export const createMeeting = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-
-        if(!req.user){
-            res.status(400)
-            throw new Error('You are not authorised!')
-        }
-    
-        if(req.user.role !== 'PATIENT'){
-            res.status(400)
-            throw new Error('You are not permitted to create meetings!')
+        if (!req.user) {
+            res.status(401).json({ message: 'You are not authorised!' });
+            return;  // Ensure function exits after response
         }
 
-        const { id } = req.params
+        console.log("user id", req.user.id)
 
-        const meeting = await prisma.meeting.findUnique({
-            where:{ id: id }
+        if (req.user.role !== 'PATIENT') {
+            res.status(403).json({ message: 'You are not permitted to create meetings!' });
+            return;
+        }
+
+        const { doctorId } = req.body as IDoctorIDInterface;
+
+        if (!doctorId) {
+            res.status(400).json({ message: 'Please select a doctor.' });
+            return;
+        }
+
+        const patientProfile = await prisma.patientProfile.findUnique({
+            where: { userId: req.user.id }
         })
 
-        if(!meeting){
-            res.status(404)
-            throw new Error(`Meeting with id of ${id} does not exist`)
+        console.log("patient profile", patientProfile)
+
+        if(!patientProfile){
+            res.status(404).json({ message: 'Kindly create a patient profile'})
+            return
         }
 
-        if(req.user.id !== meeting.patientId){
-            res.status(400)
-            throw new Error('You are not authorized to edit this meeting details')
+        console.log("patient profile", patientProfile.id)
+
+
+        const doctorExists = await prisma.doctorProfile.findUnique({
+            where: { id: doctorId }
+        });
+
+        if (!doctorExists) {
+            res.status(404).json({ message: `Doctor with ID ${doctorId} does not exist.` });
+            return;
         }
 
-        // if(meeting.acceptance === null || meeting.acceptance === false){
-        //     res.status(400)
-        //     throw new Error('You cannot give remarks for this meeting yet')
-        // }
+        // Check for existing meeting
+        const lastMeeting = await prisma.meeting.findFirst({
+            where: { patientId: patientProfile.id, doctorId },
+            orderBy: { createdAt: 'desc' }
+        });
 
-        // const { patientRemarks, rating } = req.body as IExecutedMeeting
+        if (lastMeeting) {
+            switch (lastMeeting.status) {
+                case 'PENDING':
+                    res.status(200).json({ message: 'You already have a pending meeting with this doctor.' });
+                    return;
 
-        // const updatemeeting = await prisma.meeting.update({
-        //     where: {
-        //         id: id
-        //     },
-        //     data:{
-        //         patientId: meeting.patientId,
-        //         doctorId: meeting.doctorId,
-        //         executed: true,
-        //         patientRemarks: patientRemarks ? patientRemarks : null,
-        //         rating: rating ? rating : null
-        //     }
-        // })
+                case 'ACCEPTED':
+                    res.status(200).json({ message: 'You already have an accepted meeting with this doctor.' });
+                    return;
 
-        // res.status(200).json(updatemeeting)
-    } catch (error:any) {
-        res.status(500)
-        throw new Error(error.message)
+                case 'REJECTED':
+                    // Allow creating a new meeting if the last one was rejected
+                    break;
+
+                default:
+                    res.status(400).json({ message: 'Unknown meeting status.' });
+                    return;
+            }
+        }
+
+        // Create new meeting
+        await prisma.meeting.create({
+            data: { doctorId, patientId: patientProfile.id }
+        });
+
+        res.status(201).json({
+            message: `A meeting has been set between you and Dr. ${doctorExists.firstName} ${doctorExists.lastName}. You will receive a notification when the doctor sets a meeting time.`
+        });
+    } catch (error) {
+        next(error); // Pass error to Express error handler
     }
-})
+});
 
-
-// @desc Update Meeting Details
-// @routes PUT /api/meeting/:id
+// @desc Get All Meetings
+// @routes GET /api/meetings/
 // @access Private Patient
-export const updateMeeting = asyncHandler(async(req:any, res:Response) => {
+export const getMeetings = asyncHandler(async(req:any, res:Response) => {
     try {
-        if(!req.user){
-            res.status(400)
-            throw new Error('You are not authorised!')
-        }
-    
         if(req.user.role !== 'PATIENT'){
-            res.status(400)
-            throw new Error('You are not permitted to create meetings!')
+            res.status(400).json({ message: 'You are not permitted to create meetings'})
+            return;
         }
 
-        const { id } = req.params
+        const { status } = req.query
 
-        const meeting = await prisma.meeting.findUnique({
-            where:{ id: id }
+        console.log("status", status)
+
+        const patientProfile = await prisma.patientProfile.findUnique({
+            where: { userId: req.user.id }
         })
 
-        if(!meeting){
-            res.status(404)
-            throw new Error(`Meeting with id of ${id} does not exist`)
+        if(!patientProfile){
+            res.status(404).json({ message: 'Kindly create a patient profile'})
+            return
         }
 
-        if(req.user.id !== meeting.patientId){
-            res.status(400)
-            throw new Error('You are not authorized to edit this meeting details')
-        }
-
-        if(!req.body){
-            res.status(400)
-            throw new Error('Please enter all input fields')
-        }
-
-        const { patientRemarks, rating,  doctorId } = req.body as IUpdateMeetingDetails
-
-        if(!doctorId || doctorId === ''){
-            res.status(400)
-            throw new Error('Please select a doctor')
-        }
-    
-        const doctorExists = await prisma.user.findFirst({
+        const meetings = await prisma.meeting.findMany({
             where:{
-                id: doctorId
+                patientId: patientProfile.id,
+                status
+            },
+            select:{
+                status: true,
+                doctor:{
+                    select:{
+                        id: true,
+                        firstName: true,
+                        lastName: true
+                    }
+                }
             }
         })
-    
-        if(!doctorExists){
-            res.status(404)
-            throw new Error(`Doctor with id of ${doctorId} does not exist`)
-        }
 
-        // const updatedMeeting = await prisma.meeting.update({
-        //     where: {
-        //         id: id
-        //     },
-        //     data:{
-        //         executed: true,
-        //         patientRemarks: patientRemarks ? patientRemarks : null,
-        //         rating: rating ? rating : null,
-        //         doctorId: doctorId,
-        //         patientId: req.user.id
-        //     }
-        // })
-
-        // res.status(200).json(updatedMeeting)
+        res.status(200).json(meetings)
     } catch (error:any) {
         res.status(500)
         throw new Error(error.message)
     }
 
 })
+
+
+
 
 
 // @desc Delete A Particular Meeting
@@ -212,6 +169,12 @@ export const deleteMeeting = asyncHandler(async(req:any, res:Response) => {
             throw new Error(`Meeting with id of ${id} does not exist`)
         }
 
+        // you can only delete pending meetings
+        if(meeting.status !== 'PENDING'){
+            res.status(400).json({ message: 'You can only delete pending meetings'})
+            return
+        }
+
         if(req.user.id !== meeting.patientId){
             res.status(400)
             throw new Error('You are not authorized to delete this meeting details')
@@ -231,160 +194,79 @@ export const deleteMeeting = asyncHandler(async(req:any, res:Response) => {
 
 
 
-// @desc Get All Meetings
-// @routes GET /api/meetings/
-// @access Private Patient
-export const getMeetings = asyncHandler(async(req:any, res:Response) => {
-    try {
-        if(!req.user){
-            res.status(400)
-            throw new Error('You are not authorised!')
-        }
-    
-        if(req.user.role !== 'PATIENT'){
-            res.status(400)
-            throw new Error('You are not permitted to create meetings!')
-        }
-
-        const meetings = await prisma.meeting.findMany({
-            where:{
-                patientId: req.user.id
-            }
-        })
-
-        res.status(200).json(meetings)
-    } catch (error:any) {
-        res.status(500)
-        throw new Error(error.message)
-    }
-
-})
 
 
 
-// @desc Get A Meeting
-// @routes GET /api/meeting/:id
+
+// @desc Add Reviews
+// @routes PUT /api/meeting/:id
 // @access Private /Patient
-export const getMeeting = asyncHandler(async(req:any, res:Response) => {
-    if(!req.user){
-        res.status(400)
-        throw new Error('You are not authorised!')
+export const addMeetingReviews = asyncHandler(async (req: any, res: Response) => {
+    if (!req.user) {
+        res.status(401).json({ message: 'You are not authorized' });
+        return;
     }
 
-    if(req.user.role !== 'PATIENT'){
-        res.status(400)
-        throw new Error('You are not permitted to create meetings!')
+    if (req.user.role !== 'PATIENT') {
+        res.status(403).json({ message: 'You are not permitted to add a review!' });
+        return;
     }
 
-    const { id } = req.params
+    if (Object.keys(req.body).length === 0) {
+        res.status(400).json({ message: 'There is no request body' });
+        return;
+    }
+
+    const patientProfile = await prisma.patientProfile.findUnique({
+        where: { userId: req.user.id }
+    });
+
+    if (!patientProfile) {
+        res.status(404).json({ message: 'Kindly create a patient profile' });
+        return;
+    }
+
+    console.log("Patient profile ID:", patientProfile.id);
+
+    const { review, meetingId } = req.body as IAddReviewInterface;
+
+    if (!review) {
+        res.status(400).json({ message: 'Add your review' });
+        return;
+    }
+
+    if (!meetingId) {
+        res.status(400).json({ message: 'There is no meeting ID' });
+        return;
+    }
 
     const meeting = await prisma.meeting.findUnique({
-        where:{ id: id }
-    })
+        where: { id: meetingId }
+    });
 
-    if(!meeting){
-        res.status(404)
-        throw new Error(`Meeting with id of ${id} does not exist`)
+    if (!meeting) {
+        res.status(404).json({ message: 'No such meeting exists' });
+        return;
     }
 
-    if(req.user.id !== meeting.patientId){
-        res.status(400)
-        throw new Error('You are not authorized to edit this meeting details')
+    if (meeting.status !== 'ACCEPTED' || (meeting.meetingTime && meeting.meetingTime > new Date())) {
+        res.status(400).json({ message: 'You cannot give a review for a meeting you have not had yet' });
+        return;
+    }
+    
+
+    if (!meeting.patientId || patientProfile.id !== meeting.patientId) {
+        res.status(403).json({ message: 'You are not authorized to edit this meeting details' });
+        return;
     }
 
-    res.status(200).json(meeting)
+    const newReview = await prisma.meeting.update({
+        where: { id: meeting.id },
+        data: { review }
+    });
 
-})
-
-
-// @desc Get Accepted Meetings
-// @routes GET /api/meetings/accepted
-// @access Private Patient
-export const getAcceptedMeetings = asyncHandler(async(req:any, res:Response) => {
-    try {
-        if(!req.user){
-            res.status(400)
-            throw new Error('You are not authorised!')
-        }
-    
-        if(req.user.role !== 'PATIENT'){
-            res.status(400)
-            throw new Error('You are not permitted to create meetings!')
-        }
-    
-        // const meetings = await prisma.meeting.findMany({
-        //     where: {
-        //         acceptance: true,
-        //         patientId: req.user.id
-        //     }
-        // })
-
-        // res.status(200).json(meetings)
-    } catch (error:any) {
-        res.status(500)
-        throw new Error(error.message)
-    }
-
-})
+    res.status(200).json({ message: 'You have added your review', newReview });
+});
 
 
-// @desc Get Declined Meetings
-// @routes GET /api/meetings/declined
-// @access Private Patient
-export const getDeclinedMeetings = asyncHandler(async(req:any, res:Response) => {
-    try {
-        if(!req.user){
-            res.status(400)
-            throw new Error('You are not authorised!')
-        }
-    
-        if(req.user.role !== 'PATIENT'){
-            res.status(400)
-            throw new Error('You are not permitted to create meetings!')
-        }
-    
-        // const meetings = await prisma.meeting.findMany({
-        //     where: {
-        //         acceptance: false,
-        //         patientId: req.user.id
-        //     }
-        // })
-
-        // res.status(200).json(meetings)
-    } catch (error:any) {
-        res.status(500)
-        throw new Error(error.message)
-    }
-
-})
-// @desc Get Executed Meetings
-// @routes GET /api/meetings/executed
-// @access Private Patient
-export const getExecutedMeetings = asyncHandler(async(req:any, res:Response) => {
-    try {
-        if(!req.user){
-            res.status(400)
-            throw new Error('You are not authorised!')
-        }
-    
-        if(req.user.role !== 'PATIENT'){
-            res.status(400)
-            throw new Error('You are not permitted to create meetings!')
-        }
-    
-        // const meetings = await prisma.meeting.findMany({
-        //     where: {
-        //         acceptance: true,
-        //         executed: true,
-        //         patientId: req.user.id
-        //     }
-        // })
-
-        // res.status(200).json(meetings)
-    } catch (error:any) {
-        res.status(500)
-        throw new Error(error.message)
-    }
-
-})
 

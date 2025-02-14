@@ -70,6 +70,8 @@ model Meeting {
   meetingTime    DateTime?
   status     String       @default("PENDING")
 
+  review String?
+
   createdAt      DateTime  @default(now())
   updatedAt DateTime @updatedAt
 }

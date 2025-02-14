@@ -22,10 +22,20 @@ export interface ILoginUserInterface {
     password: string
 }
 
-export interface IGetUserAuthInfoRequest extends Request {
-    user: IUserModel 
-}
+// export interface IGetUserAuthInfoRequest extends Request {
+//     user?: IUserModel 
+// }
 
-export type IAuthRequest = IGetUserAuthInfoRequest & {
-    headers: { authorization: string };
-};
+
+// export type IAuthRequest = IGetUserAuthInfoRequest & {
+//     headers: { authorization: string };
+//   };
+
+// Extend Express's Request type globally
+declare global {
+    namespace Express {
+      interface Request {
+        user?: IUserModel;
+      }
+    }
+  }

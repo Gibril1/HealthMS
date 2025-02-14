@@ -1,15 +1,14 @@
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import asyncHandler from '../utils/asynchandler'
-import { Response } from 'express'
-import { IGetUserAuthInfoRequest } from '../interfaces/auth.interfaces'
+import { Response, Request } from 'express'
 import { IRecordInterface, IPatientIDInterface } from '../interfaces/body.interfaces'
 
 
 // @desc Create Records 
 // @routes POST /api/records/
 // @access Private
-export const createRecords = asyncHandler(async(req:any, res:Response) => {
+export const createRecords = asyncHandler(async(req:Request, res:Response) => {
     if(!req.user){
         res.status(400)
         throw new Error('You are not authorised!')

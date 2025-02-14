@@ -1,15 +1,14 @@
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import asyncHandler from '../utils/asynchandler'
-import { Response } from 'express'
-import { IGetUserAuthInfoRequest } from '../interfaces/auth.interfaces'
+import { Response, Request } from 'express'
 import { IAcceptMeetingInterface } from '../interfaces/body.interfaces'
 
 
 
 
 
-export const acceptOrDeclineMeetings = asyncHandler(async(req:any, res:Response) => {
+export const acceptOrDeclineMeetings = asyncHandler(async(req:Request, res:Response) => {
     if(!req.user){
         res.status(400)
         throw new Error('You are not authorised!')

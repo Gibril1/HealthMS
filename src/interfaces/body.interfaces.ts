@@ -1,3 +1,8 @@
+export interface IAddReviewInterface{
+    meetingId: string,
+    review: string
+}
+
 
 export interface IRecordInterface {
     patientId: string,
