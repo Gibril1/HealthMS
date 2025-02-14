@@ -3,111 +3,92 @@ import asyncHandler from 'express-async-handler'
 import cloudinary from '../utils/cloudinary'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
+
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import { ILoginUserInterface, IRegisterUserInterface } from '../interfaces/auth.interfaces'
+import { isValidEmail, isAlphabetic } from '../utils/validation'
 
 
 
-export const registerUser = asyncHandler(async(req:Request, res:Response) => {
+export const registerUser = asyncHandler(async (req: Request, res: Response) => {
     try {
-        if(!req.body){
-            res.status(400)
-            throw new Error('Please enter all required fields.')
+        const userRoles = ["DOCTOR", "PATIENT"];
+
+        if (!req.body) {
+            res.status(400).json({ message: 'Please enter all required fields.' });
+            return;
         }
 
-        const { 
-            email, 
-            password, 
-            role,
-            firstName,
-            lastName,
-            otherName,
-            dob
-             } = req.body as IRegisterUserInterface
-        
-        // save image in cloudinary
-        let result
-        const fileImage = (req as any).file
-        if(fileImage){
-            result = (await cloudinary.uploader.upload(req as any)).file.path
+        const { email, password, confirmPassword, role, firstName, lastName } = req.body as IRegisterUserInterface;
+
+        if (!email || !password || !firstName || !lastName) {
+            res.status(400).json({ message: 'Please enter all required fields.' });
+            return;
         }
 
-        // check if all input fields are correct
-        if(
-            !email || email === '' || 
-            !password || password === '' || !role || 
-            !firstName || firstName === '' ||
-            !lastName || lastName === '' ||
-            !otherName || otherName === ''  ){
-            res.status(400)
-            throw new Error('Please enter all fields.')
+        if (!isValidEmail(email)) {
+            res.status(400).json({ message: 'Invalid email address' });
+            return;
         }
 
-        const userExists = await prisma.user.findFirst({
-            where: { email: email}
-        })
-    
-        if(userExists){
-            res.status(400)
-            throw new Error(`User with email ${email} already exists`)
+        if (!isAlphabetic(firstName)) {
+            res.status(400).json({ message: 'Invalid first name' });
+            return;
         }
-    
-        const salt = await bcrypt.genSalt(10)
-        const hashedPassword:string = await bcrypt.hash(password, salt)
-    
+
+        if (!isAlphabetic(lastName)) {
+            res.status(400).json({ message: 'Invalid last name' });
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            res.status(400).json({ message: 'Passwords do not match' });
+            return;
+        }
+
+        if (!userRoles.includes(role)) {
+            res.status(400).json({ message: 'Invalid role' });
+            return;
+        }
+
+        const userExists = await prisma.user.findFirst({ where: { email } });
+
+        if (userExists) {
+            res.status(400).json({ message: 'User with this email already exists' });
+            return;
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         const user = await prisma.user.create({
-            data:{
-                email: email,
-                password: hashedPassword,
-                role: role
-            }
-        })  
+            data: { email, password: hashedPassword, role }
+        });
 
-        if(user && user.role === 'DOCTOR'){
+        if (user.role === 'DOCTOR') {
             await prisma.doctorProfile.create({
-                data:{
-                    firstName: firstName,
-                    lastName: lastName,
-                    otherName: otherName,
-                    dob: dob!,
-                    userId: user.id,
-                    cloudinaryId: result ? result.public_id : null,
-                    avatar: result ? result.secure_url : null
-                }
-            })    
-            res.status(200).json({
-                message:`Account has been created for ${firstName} ${lastName}`
-            })
-        }else{
+                data: { firstName, lastName, userId: user.id }
+            });
+        } else {
             await prisma.patientProfile.create({
-               data: {
-                firstName: firstName,
-                lastName: lastName,
-                otherName: otherName,
-                dob:  dob!,
-                userId: user.id,
-                cloudinaryId: result ? result.public_id : null,
-                avatar: result ? result.secure_url : null
-               }
-            })
-    
-            res.status(200).json({
-                message:`Account has been created for ${firstName} ${lastName}!`
-            })
-        }       
-    } catch (error: any) {
-        res.status(500)
-        throw new Error('Error. Cannot Register. Try Again')
-    }   
-})
+                data: { firstName, lastName, userId: user.id }
+            });
+        }
+
+        res.status(201).json({ message: `Account has been created for ${firstName} ${lastName}` });
+    } catch (error) {
+        // Pass the error to Express error-handling middleware
+    }
+});
+
 
 export const loginUser = asyncHandler(async(req:Request, res:Response) => {
     try {
         // get data from request body
         const { email, password } = req.body as ILoginUserInterface
 
-        if(!email || email === '' || !password || password === ''){
+        if(!email  || !password ){
             res.status(400)
             throw new Error('Email and password are required fields')
         }
@@ -139,6 +120,9 @@ export const loginUser = asyncHandler(async(req:Request, res:Response) => {
 
 
 const generateToken = ( id:string ):string => {
-    return jwt.sign({ id }, "process.env.JWT_SECRET", { expiresIn: '30d'})
+    if (!process.env.JWT_SECRET) {
+        throw new Error('JWT_SECRET is not defined');
+    }
+    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 }
 

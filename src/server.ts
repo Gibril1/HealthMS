@@ -22,10 +22,10 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 app.use(errorHandler)
 
 // routes
-app.use('/api/auth', authRouter)
-app.use('/api/records', recordRouter)
-app.use('/api/meeting', meetingRouter)
-app.use('/api/doctor', doctorRouter)
+app.use('/api/v1/auth', authRouter)
+app.use('/api/v1/records', recordRouter)
+app.use('/api/v1/meeting', meetingRouter)
+app.use('/api/v1/doctor', doctorRouter)
 
 // Listen to server
 app.listen(port, () => {

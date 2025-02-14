@@ -11,11 +11,10 @@ export interface IUserModel  {
 export interface IRegisterUserInterface {
     email: string,
     password: string,
-    role: string ,
+    confirmPassword: string,
+    role: "DOCTOR" | "PATIENT",
     firstName: string,
     lastName: string,
-    otherName: string,
-    dob: Date | null 
 }
 
 export interface ILoginUserInterface {
