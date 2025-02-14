@@ -45,17 +45,7 @@ model DoctorProfile {
   Meeting        Meeting[]
 }
 
-model PatientRecords {
-  id        String   @id @default(uuid())
-  patientId String
-  patient   PatientProfile     @relation(fields: [patientId], references: [id])
-  doctorId  String
-  doctor DoctorProfile @relation(fields: [doctorId], references: [id])
-  remarks   String
-  diagnosis String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+
 
 
 
@@ -72,7 +62,48 @@ model Meeting {
 
   review String?
 
+  patientRecords PatientRecords[]
+
   createdAt      DateTime  @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model PatientRecords {
+  id        String   @id @default(uuid())
+
+  patientId String
+  patient   PatientProfile     @relation(fields: [patientId], references: [id])
+
+  doctorId  String
+  doctor DoctorProfile @relation(fields: [doctorId], references: [id])
+
+  meetingId String
+  meeting Meeting @relation(fields: [meetingId], references: [id])
+
+  notes   String
+
+  actionableSteps ActionableSteps[]
+
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ActionableSteps {
+  id        String   @id @default(uuid())
+
+  recordId String
+  patientRecords PatientRecords @relation(fields: [recordId], references: [id])
+
+  task String?
+  type String?
+  frequency String?
+  duration String?
+
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+}
+
 

@@ -24,8 +24,8 @@ app.use(errorHandler)
 // routes
 app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/records', recordRouter)
-app.use('/api/v1/meeting', meetingRouter)
-app.use('/api/v1/doctor', doctorRouter)
+app.use('/api/v1/meetings', meetingRouter)
+app.use('/api/v1/doctors', doctorRouter)
 
 // Listen to server
 app.listen(port, () => {

@@ -16,6 +16,7 @@ export const createMeeting = asyncHandler(async (req: Request, res: Response, ne
         }
 
         console.log("user id", req.user.id)
+        console.log("user role", req.user.role)
 
         if (req.user.role !== 'PATIENT') {
             res.status(403).json({ message: 'You are not permitted to create meetings!' });
@@ -120,6 +121,7 @@ export const getMeetings = asyncHandler(async(req:any, res:Response) => {
                 status
             },
             select:{
+                id: true,
                 status: true,
                 doctor:{
                     select:{

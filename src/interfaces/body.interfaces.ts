@@ -5,8 +5,8 @@ export interface IAddReviewInterface{
 
 
 export interface IRecordInterface {
-    patientId: string,
-    remarks: string
+    meetingId: string,
+    notes: string
 }
 
 export interface IPatientIDInterface {
@@ -29,6 +29,6 @@ export interface IUpdateMeetingDetails {
 }
 
 export interface IAcceptMeetingInterface {
-    meetingTime?: Date,
-    accept: boolean
+    meetingTime?: string,
+    status: 'ACCEPTED' | 'REJECTED'
 }

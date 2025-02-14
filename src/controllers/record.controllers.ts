@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import asyncHandler from '../utils/asynchandler'
+import { extractActionableSteps } from '../utils/llm'
 import { Response, Request } from 'express'
 import { IRecordInterface, IPatientIDInterface } from '../interfaces/body.interfaces'
 
@@ -10,232 +11,184 @@ import { IRecordInterface, IPatientIDInterface } from '../interfaces/body.interf
 // @access Private
 export const createRecords = asyncHandler(async(req:Request, res:Response) => {
     if(!req.user){
-        res.status(400)
-        throw new Error('You are not authorised!')
+        res.status(401).json({ message: 'You are not authorised' })
+        return
     }
 
     if(req.user.role !== 'DOCTOR'){
-        res.status(400)
-        throw new Error('You are not permitted to create records!')
+        res.status(403).json({ message: 'You are not authorised to add patient records'})
+        return
     }
 
+    if(!req.body){
+        res.status(400).json({ message: 'Please enter request data'})
+        return
+    }
     const {
-        patientId,
-        remarks
+        meetingId,
+        notes
     } = req.body as IRecordInterface
 
 
-    if(!req.body){
-        res.status(400)
-        throw new Error('Please enter input fields')
+    
+
+    if(!meetingId){
+        res.status(400).json({ message: 'Please enter meeting ID'})
+        return
     }
 
-    if(!patientId || patientId === '' || !remarks || remarks === ''){
-        res.status(400)
-        throw new Error('Please enter input fields')
+    if(!notes){
+        res.status(400).json({ message: 'Please enter meeting notes '})
+        return
     }
 
-    const patientExists = await prisma.user.findFirst({
+    // check if the meeting exists
+    const meeting = await prisma.meeting.findUnique({
         where:{
-            id: patientId
-        }
-    })
-        
-    if(!patientExists){
-        res.status(404)
-        throw new Error(`Patient with id ${patientId} does not exist`)
-    }
-
-    // const record = await prisma.patientRecords.create({
-    //     data:{
-    //         remarks: remarks,
-    //         doctorId: req.user.id,
-    //         patientId: patientId
-    //     }
-    // })
-
-    // res.status(200).json(record)
-
-})
-
-
-// @desc Get Doctor's Records
-// @routes GET /api/records/
-// @access Private Doctor
-export const getDoctorRecords = asyncHandler(async(req:any, res:Response) => {
-    if(!req.user){
-        res.status(400)
-        throw new Error('You are not authorised!')
-    }
-
-    if(req.user.role !== 'DOCTOR'){
-        res.status(400)
-        throw new Error('You are not permitted to create records!')
-    }
-
-    const doctorRecords = await prisma.patientRecords.findMany({
-        where: {
-            doctorId: req.user.id
-        }
-    })
-
-    res.status(200).json(doctorRecords)
-
-})
-
-
-// @desc Get Patient Records
-// @routes GET /api/records
-// @access Private Doctor
-export const getPatientsRecords = asyncHandler(async(req:any, res:Response) => {
-    if(!req.user){
-        res.status(400)
-        throw new Error('You are not authorised!')
-    }
-
-    if(req.user.role !== 'DOCTOR'){
-        res.status(400)
-        throw new Error('You are not permitted to create records!')
-    }
-
-    const { patientId } = req.body as IPatientIDInterface
-
-    const patientExists = await prisma.user.findFirst({
-        where:{
-            id: patientId
-        }
-    })
-        
-    if(!patientExists){
-        res.status(404)
-        throw new Error(`Patient with id ${patientId} does not exist`)
-    }
-
-    const patientRecords = await prisma.patientRecords.findMany({
-        where: {
-            patientId: patientId
-        }
-    })
-
-    res.status(200).json(patientRecords)
-})
-
-
-// @desc Get A Record
-// @routes GET /api/records/:id
-// @access Private Doctor
-export const getRecord = asyncHandler(async(req:any, res:Response) => {
-    if(!req.user){
-        res.status(400)
-        throw new Error('You are not authorised!')
-    }
-
-    if(req.user.role !== 'DOCTOR'){
-        res.status(400)
-        throw new Error('You are not permitted to create records!')
-    }
-    const record = await prisma.patientRecords.findUnique({
-        where:{
-            id: req.params.id
-        }
-    })
-
-    if(!record){
-        res.status(404)
-        throw new Error(`Record with id of ${req.params.id} does not exist`)
-    }
-
-    res.status(200).json(record)
-
-})
-export const updateRecord = asyncHandler(async(req:any, res:Response) => {
-    if(!req.user){
-        res.status(400)
-        throw new Error('You are not authorised!')
-    }
-
-    if(req.user.role !== 'DOCTOR'){
-        res.status(400)
-        throw new Error('You are not permitted to create records!')
-    }
-
-    const record = await prisma.patientRecords.findUnique({
-        where:{
-            id: req.params.id
-        }
-    })
-
-    if(!record){
-        res.status(404)
-        throw new Error(`Record with id of ${req.params.id} does not exist`)
-    }
-
-    if(req.user.id !== record.doctorId ){
-        res.status(400)
-        throw new Error('You are not authorized to update this record')
-    }
-
-    if(!req.body){
-        res.status(404)
-        throw new Error('Please enter all fields')
-    }
-
-    const { patientId, remarks } = req.body as IRecordInterface
-
-    if(!patientId || patientId === '' || !remarks || remarks === ''){
-        res.status(400)
-        throw new Error('Please enter input fields')
-    }
-
-    const updatedRecord = await prisma.patientRecords.update({
-        where:{
-            id: req.params.id
+            id: meetingId
         },
+        select:{
+            id: true,
+            doctor:{
+                select:{
+                    id: true,
+                    user:{
+                        select:{
+                            id: true
+                        }
+                    }
+                }
+            },
+            patientId: true
+        }
+    })
+
+    if(!meeting){
+        res.status(404).json({ message: 'Such a meeting did not exist'})
+        return
+    }
+
+    if(meeting.doctor.user.id !== req.user.id){
+        res.status(403).json({ message: 'You are not authorised to add meeting records'})
+    }
+
+    
+
+    const record = await prisma.patientRecords.create({
         data:{
-            remarks: remarks,
-            patientId: patientId,
-            doctorId: req.user.id
+            notes,
+            doctorId: meeting.doctor.id,
+            patientId: meeting.patientId,
+            meetingId: meeting.id
         }
     })
 
-    res.status(200).json(updatedRecord)
+    // extract actionable steps from llm
+    const actionableSteps = await extractActionableSteps(notes);
+
+    console.log({ actionableSteps })
+    const newSteps = await Promise.all(
+        actionableSteps.map(async (actionableStep) => {
+            return prisma.actionableSteps.create({
+                data: {
+                    task: actionableStep.task,
+                    type: actionableStep.type,
+                    duration: actionableStep.duration,
+                    frequency: actionableStep.frequency,
+                    recordId: record.id
+                }
+            });
+        })
+    );
+
+    console.log({ newSteps })
+
+
+    
+
+
+    res.status(200).json({ message: 'A new meeting record has been added', record})
 
 })
-export const deleteRecord = asyncHandler(async(req:any, res:Response) => {
+
+
+export const getRecords = asyncHandler(async(req:Request, res:Response) => {
+    // we are finding all the notes and records for a particular meeting
+    const { id } = req.params
+
     if(!req.user){
-        res.status(400)
-        throw new Error('You are not authorised!')
+        res.status(401).json({ message: 'You are not authorised' })
+        return
     }
 
-    if(req.user.role !== 'DOCTOR'){
-        res.status(400)
-        throw new Error('You are not permitted to create records!')
-    }
-
-    const record = await prisma.patientRecords.findUnique({
-        where:{
-            id: req.params.id
+    const meeting = await prisma.meeting.findUnique({
+        where: { id },
+        select:{
+            id: true,
+            patient:{
+                select:{
+                    user:{
+                        select:{
+                            id: true
+                        }
+                    }
+                }
+            },
+            doctor:{
+                select:{
+                    user:{
+                        select:{
+                            id: true
+                        }
+                    }
+                }
+            }
         }
     })
 
-    if(!record){
-        res.status(404)
-        throw new Error(`Record with id of ${req.params.id} does not exist`)
+    if(!meeting){
+        res.status(404).json({ message: 'This meeting does not exist' })
+        return
     }
 
-    if(req.user.id !== record.doctorId ){
-        res.status(400)
-        throw new Error('You are not authorized to update this record')
+    if (req.user.id !== meeting.doctor.user.id && req.user.id !== meeting.patient.user.id) {
+        res.status(403).json({ message: 'You cannot access these records' });
+        return;
     }
+    
 
-    await prisma.patientRecords.delete({
-        where:{
-            id: req.params.id
+    const records = await prisma.patientRecords.findMany({
+        where: { meetingId: meeting.id },
+        select:{
+            id: true,
+            notes: true,
+            doctor:{
+                select:{
+                    id: true,
+                    firstName: true,
+                    lastName: true
+                }
+            },
+            patient:{
+                select:{
+                    id: true,
+                    firstName: true,
+                    lastName: true
+                }
+            },
+            actionableSteps:{
+                select:{
+                    id: true,
+                    task: true,
+                    type: true,
+                    frequency: true,
+                    duration: true
+                }
+            }
         }
     })
 
-    res.status(204).json({ id: req.params.id })
+    res.status(200).json({ message: 'These are the records', records})
 })
-
 
 

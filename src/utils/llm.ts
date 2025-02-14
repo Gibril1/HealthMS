@@ -34,7 +34,14 @@ Example Output
 // Migraine episode. Take sumatriptan 50mg at onset. Rest in a dark room. Avoid caffeine for 24 hours.
 // `
 
-export async function extractActionableSteps(doctorNote:string) {
+interface IActionableStep {
+  type?: string;
+  task?: string;
+  frequency?: string;
+  duration?: string;
+}
+
+export async function extractActionableSteps(doctorNote: string): Promise<IActionableStep[]> {
   const response = await groq.chat.completions.create({
     model: "gemma2-9b-it",
     messages: [
@@ -45,8 +52,9 @@ export async function extractActionableSteps(doctorNote:string) {
   });
 
   const content = response.choices[0]?.message?.content || "";
+
   try {
-    const structuredOutput = JSON.parse(content);
+    const structuredOutput: IActionableStep[] = JSON.parse(content);
     console.log("Extracted Actionable Steps:", structuredOutput);
     return structuredOutput;
   } catch (error) {

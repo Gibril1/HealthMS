@@ -89,8 +89,8 @@ export const loginUser = asyncHandler(async(req:Request, res:Response) => {
         const { email, password } = req.body as ILoginUserInterface
 
         if(!email  || !password ){
-            res.status(400)
-            throw new Error('Email and password are required fields')
+            res.status(400).json({ message: 'Please enter both email and password'})
+            return
         }
 
         const user = await prisma.user.findFirst({
@@ -98,8 +98,8 @@ export const loginUser = asyncHandler(async(req:Request, res:Response) => {
         })
 
         if(!user){
-            res.status(404)
-            throw new Error(`User with email ${email} does not exist`)
+            res.status(404).json({ message: 'Invalid email or password'})
+            return
         }
 
         if(user && await bcrypt.compare(password, user.password)){
@@ -107,13 +107,14 @@ export const loginUser = asyncHandler(async(req:Request, res:Response) => {
                 token: generateToken(user.id)
             })
         }else{
-            res.status(400)
-            throw new Error("Invalid Credentials");
+            res.status(400).json({ message: 'Invalid Credentials'})
+            return
             
         }
     } catch (error:any) {
-        res.status(500)
-        throw new Error('Error. Cannot Login. Try Again')
+        console.log(error)
+        res.status(500).json({ message: 'Error. Cannot login'})
+        return
     }
 })
 
